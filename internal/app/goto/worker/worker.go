@@ -16,18 +16,18 @@ type Worker struct {
 	TaskCount int
 }
 
-func (w *Worker) CollectStats() {
+func (worker *Worker) CollectStats() {
 	fmt.Println("I will collect stats")
 }
 
-func (w *Worker) RunTask() {
+func (worker *Worker) RunTask() {
 	fmt.Println("I will start or stop a task")
 }
 
-func (w *Worker) StartTask() {
+func (worker *Worker) StartTask() {
 	fmt.Println("I will start a task")
 }
 
-func (w *Worker) StopTask() {
+func (worker *Worker) StopTask() {
 	fmt.Println("I will stop a task")
 }

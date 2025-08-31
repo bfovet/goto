@@ -15,7 +15,7 @@ import (
 )
 
 func createContainer() (*task.Docker, *task.DockerResult) {
-	c := task.Config{
+	config := task.Config{
 		Name:  "test-container-1",
 		Image: "postgres:13",
 		Env: []string{
@@ -24,25 +24,25 @@ func createContainer() (*task.Docker, *task.DockerResult) {
 		},
 	}
 
-	dc, _ := client.NewClientWithOpts(client.FromEnv)
-	d := task.Docker{
-		Client: dc,
-		Config: c,
+	client, _ := client.NewClientWithOpts(client.FromEnv)
+	docker := task.Docker{
+		Client: client,
+		Config: config,
 	}
 
-	result := d.Run()
+	result := docker.Run()
 	if result.Error != nil {
 		fmt.Printf("%v\n", result.Error)
 		return nil, nil
 	}
 
-	fmt.Printf("Container %s is running with config %v\n", result.ContainerId, c)
+	fmt.Printf("Container %s is running with config %v\n", result.ContainerId, config)
 
-	return &d, &result
+	return &docker, &result
 }
 
-func stopContainer(d *task.Docker, id string) *task.DockerResult {
-	result := d.Stop(id)
+func stopContainer(docker *task.Docker, id string) *task.DockerResult {
+	result := docker.Stop(id)
 	if result.Error != nil {
 		fmt.Printf("%v\n", result.Error)
 		return nil
@@ -53,7 +53,7 @@ func stopContainer(d *task.Docker, id string) *task.DockerResult {
 }
 
 func main() {
-	t := task.Task{
+	task1 := task.Task{
 		ID:     uuid.New(),
 		Name:   "Task-1",
 		State:  task.Pending,
@@ -62,37 +62,37 @@ func main() {
 		Disk:   1,
 	}
 
-	te := task.TaskEvent{
+	taskEvent := task.TaskEvent{
 		ID:        uuid.New(),
 		State:     task.Pending,
 		Timestamp: time.Now(),
-		Task:      t,
+		Task:      task1,
 	}
 
-	fmt.Printf("task: %v\n", t)
-	fmt.Printf("task event: %v\n", te)
+	fmt.Printf("task: %v\n", task1)
+	fmt.Printf("task event: %v\n", taskEvent)
 
-	w := worker.Worker{
+	worker := worker.Worker{
 		Name: "worker-1", Queue: *queue.New(),
 		Db: make(map[uuid.UUID]*task.Task),
 	}
-	fmt.Printf("worker: %v\n", w)
-	w.CollectStats()
-	w.RunTask()
-	w.StartTask()
-	w.StopTask()
+	fmt.Printf("worker: %v\n", worker)
+	worker.CollectStats()
+	worker.RunTask()
+	worker.StartTask()
+	worker.StopTask()
 
-	m := manager.Manager{
+	manager := manager.Manager{
 		Pending: *queue.New(),
 		TaskDb:  make(map[string][]*task.Task),
 		EventDb: make(map[string][]*task.TaskEvent),
-		Workers: []string{w.Name},
+		Workers: []string{worker.Name},
 	}
-	fmt.Printf("manager: %v\n", m)
-	m.SelectWorker()
-	m.UpdateTasks()
-	m.SendWork()
-	n := node.Node{
+	fmt.Printf("manager: %v\n", manager)
+	manager.SelectWorker()
+	manager.UpdateTasks()
+	manager.SendWork()
+	node := node.Node{
 		Name:   "Node-1",
 		Ip:     "192.168.1.1",
 		Cores:  4,
@@ -100,7 +100,7 @@ func main() {
 		Disk:   25,
 		Role:   "worker",
 	}
-	fmt.Printf("node: %v\n", n)
+	fmt.Printf("node: %v\n", node)
 
 	fmt.Printf("create a test container\n")
 	dockerTask, createResult := createContainer()

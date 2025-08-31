@@ -86,48 +86,48 @@ type DockerResult struct {
 	Result      string
 }
 
-func (d *Docker) Run() DockerResult {
+func (docker *Docker) Run() DockerResult {
 	ctx := context.Background()
-	reader, err := d.Client.ImagePull(ctx, d.Config.Image, image.PullOptions{})
+	reader, err := docker.Client.ImagePull(ctx, docker.Config.Image, image.PullOptions{})
 	if err != nil {
-		log.Printf("Error pulling image %s: %v\n", d.Config.Image, err)
+		log.Printf("Error pulling image %s: %v\n", docker.Config.Image, err)
 		return DockerResult{Error: err}
 	}
 	io.Copy(os.Stdout, reader)
 
-	rp := container.RestartPolicy{
-		Name: container.RestartPolicyMode(d.Config.RestartPolicy),
+	restartPolicy := container.RestartPolicy{
+		Name: container.RestartPolicyMode(docker.Config.RestartPolicy),
 	}
 
-	r := container.Resources{
-		Memory: d.Config.Memory,
+	resources := container.Resources{
+		Memory: docker.Config.Memory,
 	}
 
-	cc := container.Config{
-		Image:        d.Config.Image,
+	containerConfig := container.Config{
+		Image:        docker.Config.Image,
 		Tty:          false,
-		Env:          d.Config.Env,
-		ExposedPorts: d.Config.ExposedPorts,
+		Env:          docker.Config.Env,
+		ExposedPorts: docker.Config.ExposedPorts,
 	}
 
-	hc := container.HostConfig{
-		RestartPolicy:   rp,
-		Resources:       r,
+	hostConfig := container.HostConfig{
+		RestartPolicy:   restartPolicy,
+		Resources:       resources,
 		PublishAllPorts: true,
 	}
 
-	res, err := d.Client.ContainerCreate(ctx, &cc, &hc, nil, nil, d.Config.Name)
+	res, err := docker.Client.ContainerCreate(ctx, &containerConfig, &hostConfig, nil, nil, docker.Config.Name)
 	if err != nil {
-		log.Printf("Error creating container using image %s: %v\n", d.Config.Image, err)
+		log.Printf("Error creating container using image %s: %v\n", docker.Config.Image, err)
 		return DockerResult{Error: err}
 	}
 
-	if err = d.Client.ContainerStart(ctx, res.ID, container.StartOptions{}); err != nil {
+	if err = docker.Client.ContainerStart(ctx, res.ID, container.StartOptions{}); err != nil {
 		log.Printf("Error starting container %s: %v\n", res.ID, err)
 		return DockerResult{Error: err}
 	}
 
-	out, err := d.Client.ContainerLogs(ctx, res.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
+	out, err := docker.Client.ContainerLogs(ctx, res.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		log.Printf("Error getting logs for container %s: %v\n", res.ID, err)
 		return DockerResult{Error: err}
@@ -138,16 +138,16 @@ func (d *Docker) Run() DockerResult {
 	return DockerResult{ContainerId: res.ID, Action: "start", Result: "success"}
 }
 
-func (d *Docker) Stop(id string) DockerResult {
+func (docker *Docker) Stop(id string) DockerResult {
 	log.Printf("Attempting to stop container %v", id)
 	ctx := context.Background()
-	err := d.Client.ContainerStop(ctx, id, container.StopOptions{})
+	err := docker.Client.ContainerStop(ctx, id, container.StopOptions{})
 	if err != nil {
 		log.Printf("Error stopping container %s: %v\n", id, err)
 		return DockerResult{Error: err}
 	}
 
-	err = d.Client.ContainerRemove(ctx, id, container.RemoveOptions{
+	err = docker.Client.ContainerRemove(ctx, id, container.RemoveOptions{
 		RemoveVolumes: true,
 		RemoveLinks:   false,
 		Force:         false,
