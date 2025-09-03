@@ -30,8 +30,9 @@ type Task struct {
 	Name          string
 	State         State
 	Image         string
-	Memory        int
-	Disk          int
+	Cpu           float64
+	Memory        int64
+	Disk          int64
 	ExposedPorts  nat.PortSet
 	PortBindings  map[string]string
 	RestartPolicy string
@@ -72,6 +73,18 @@ type Config struct {
 	Env []string
 	// RestartPolicy for the container ["", "always", "unless-stopped", "on-failure"]
 	RestartPolicy string
+}
+
+func NewConfig(task *Task) *Config {
+	return &Config{
+		Name:          task.Name,
+		ExposedPorts:  task.ExposedPorts,
+		Image:         task.Image,
+		Cpu:           task.Cpu,
+		Memory:        task.Memory,
+		Disk:          task.Disk,
+		RestartPolicy: task.RestartPolicy,
+	}
 }
 
 type Docker struct {
