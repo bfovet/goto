@@ -46,10 +46,10 @@ func (worker *Worker) RunTask() task.DockerResult {
 		case task.Completed:
 			result = worker.StopTask(taskQueued)
 		default:
-			result.Error = errors.New("We should not get here")
+			result.Error = errors.New("we should not get here")
 		}
 	} else {
-		err := fmt.Errorf("Invalid transition from %v to %v", taskPersisted.State, taskQueued.State)
+		err := fmt.Errorf("invalid transition from %v to %v", taskPersisted.State, taskQueued.State)
 		result.Error = err
 	}
 	return result
@@ -61,7 +61,7 @@ func (worker *Worker) StartTask(t task.Task) task.DockerResult {
 	docker := task.NewDocker(config)
 	result := docker.Run()
 	if result.Error != nil {
-		log.Printf("Err running task %v: %v\n", t.ID, result.Error)
+		log.Printf("Error running task %v: %v\n", t.ID, result.Error)
 		t.State = task.Failed
 		worker.Db[t.ID] = &t
 		return result
@@ -75,8 +75,8 @@ func (worker *Worker) StartTask(t task.Task) task.DockerResult {
 }
 
 func (worker *Worker) StopTask(t task.Task) task.DockerResult {
-	config := t.NewConfig(&t)
-	docker := t.NewDocker(config)
+	config := task.NewConfig(&t)
+	docker := task.NewDocker(config)
 
 	result := docker.Stop(t.ContainerId)
 	if result.Error != nil {
